@@ -3,12 +3,12 @@ TRENCHES
 The game TRENCHES is a tower defence game with some modified flavours added to
 the game play, most notably, unlike in conventional tower defence games where
 incoming enemies are unable to attack and destroy the defending units, the
-players defences are at constant risk, like real soldiers in battle field
+players defences are at constant risks, like real soldiers in battle field
 trenches.
 
 Another major change to the game play is defending units are not strictly
 static: once a soldier runs out of ammo, he will move to a nearby ammobox
-and reload; should a army doctor finds a wounded fellow, he will come over
+and reload; should a army doctor find a wounded fellow, he will come over
 and heal the wound. After reload, soldier will return back to his original
 slot, and army doctor will just stay where he is, until next medic care
 call is issued.
@@ -20,7 +20,7 @@ are inside the trenches (hence comes the title). Incoming enemies will come
 from one or multiple directions. If certain number of enemies pass across
 your defence lines, the mission is failed.
 
-Defence units the play can deploy include:
+Defence units the player can deploy include:
     - Rifle men,
     - Machinegun men,
     - Grenadiers,
@@ -35,17 +35,11 @@ Enemy team may have all above units except Medics and Ammoboxes.
 Some tips/features:
     - Firing accuracy will drop when wounded, so will moving speed.
     - Certain chance the enemy's firing will miss, thus mimicking the effect
-      of enjoying extra cover provided by the trenches.
+      of extra cover provided by the trenches.
     - Explosive weapons have areal damage.
     - The in-game intel-bar shows intels about incoming attacks, as well as
       some shouts from your men.
     - Some other tips are shown in the game.
-
-
-Required python modules:
-
-    - pygame (mine is 1.9.3).
-    - numpy
 
 
 The game has got its basic shape: a working game play, a set of GUI, some
@@ -58,9 +52,14 @@ and of cause better graphics.
 
 I may come back to implement some of these, but I kind of prefer leaving it
 for now and starting to learn a more powerful game engine, perhaps Unity.
-So if anyone find this game interesting and would like to mod it, please
+So if anyone finds this game interesting and would like to mod it, please
 go ahead, and I'd appreciate it if you could also share with me your own
 re-creations.
 
 Author: Guangzhi XU (xugzhi1987@gmail.com, guangzhi.xu@outlook.com)
+
+Required python modules:
+
+    - pygame (mine is 1.9.3).
+    - numpy
 
