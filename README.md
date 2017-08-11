@@ -3,10 +3,10 @@ A 2D tower defence game developed using Python and pygame
 
 # TRENCHES
 
-The game TRENCHES is a tower defence game with some modified flavours added to
+The game TRENCHES is a tower defence game with some new flavours added to
 the game play, most notably, unlike in conventional tower defence games where
 incoming enemies are unable to attack and destroy the defending units, the
-players defences are at constant risks, like real soldiers in battle field
+player's defences are at constant risks, like real soldiers in battle field
 trenches.
 
 Another major change to the game play is defending units are not strictly
