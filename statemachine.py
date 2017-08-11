@@ -169,7 +169,7 @@ class DefencingState(State):
     def entry_actions(self):
         #----Send defencing shout to intel center------------------
         intel_text=self.soldier.rank.capitalize()+' '+self.soldier.name+\
-                StateMachine.getRandomShout()
+                ': '+StateMachine.getRandomShout()
         shout_intel=intel.Intel(text=intel_text,intel_type='shout',\
                 priority=4,start=self.soldier.world.global_time_passed,\
                 time=3000)
