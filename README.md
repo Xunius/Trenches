@@ -76,5 +76,11 @@ Author: Guangzhi XU (xugzhi1987@gmail.com, guangzhi.xu@outlook.com)
     - No Mac at the moment
     - You can of cause obtain the source and run the main python script "Trenches.py" 
 
+# Screenshots
+
 ![Screenshot1](ui/Screenshot1.png?raw=true "Screenshot1")
+
+![Screenshot2](ui/Screenshot2.png?raw=true "Screenshot2")
+
+![Screenshot3](ui/Screenshot3.png?raw=true "Screenshot3")
 
