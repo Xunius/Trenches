@@ -75,3 +75,6 @@ Author: Guangzhi XU (xugzhi1987@gmail.com, guangzhi.xu@outlook.com)
     - For both, download the package, unzip, and run "Trenches"
     - No Mac at the moment
     - You can of cause obtain the source and run the main python script "Trenches.py" 
+
+![Screenshot1](ui/Screenshot1.png?raw=true "Screenshot1")
+
