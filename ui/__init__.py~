@@ -1,0 +1,489 @@
+import pygame
+import button
+import generals
+import weapons
+import windows
+import os
+
+PATH=os.path.dirname(os.path.realpath(__file__))
+
+#----Menu button--------------------------
+MENU_BUTTON_FILE='image_menubutton_1x40x2x60.png'
+
+#----Scroll menu--------------------------
+SCROLL_BAR_FILE='image_scrollbar_1x40x1x220.png'
+LEFT_SCROLL_FILE='image_leftscroll_1x40x3x20.png'
+RIGHT_SCROLL_FILE='image_rightscroll_1x40x3x20.png'
+
+UP_SCROLL_FILE='image_upscroll_1x20x3x20.png'
+DOWN_SCROLL_FILE='image_downscroll_1x20x3x20.png'
+
+#----Intel bar--------------------------
+INTEL_BAR_FILE='image_intelbar_1x40x1x360.png'
+
+#----Money and hq life--------------------------
+MONEY_BAR_FILE='image_moneybar_1x40x1x90.png'
+HQ_BAR_FILE='image_hqbar_1x40x1x70.png'
+
+#----Weapon buttons--------------------------
+AMMO_BUTTON_FILE='image_ammobutton_1x35x3x35.png'
+ARTILLERY_BUTTON_FILE='image_artillerybutton_1x35x3x35.png'
+FLAMER_BUTTON_FILE='image_flamerbutton_1x35x3x35.png'
+GRENADE_BUTTON_FILE='image_grenadebutton_1x35x3x35.png'
+MACHINEGUN_BUTTON_FILE='image_machinegunbutton_1x35x3x35.png'
+MEDI_BUTTON_FILE='image_medibutton_1x35x3x35.png'
+MORTAR_BUTTON_FILE='image_mortarbutton_1x35x3x35.png'
+RIFLE_BUTTON_FILE='image_riflebutton_1x35x3x35.png'
+SNIPER_BUTTON_FILE='image_sniperbutton_1x35x3x35.png'
+
+PAUSE_SCREEN_FILE='image_paused_1x600x1x800.png'
+RESUME_BUTTON_FILE='image_resumebutton_1x40x1x80.png'
+OPTION_BUTTON_FILE='image_optionbutton_1x40x1x80.png'
+TOMAIN_BUTTON_FILE='image_tomainbutton_1x40x1x80.png'
+EXIT_BUTTON_FILE='image_exitbutton_1x40x1x80.png'
+
+LEFT_BLACKBUTTON_FILE='image_buttonblackleft_1x42x1x40.png'
+RIGHT_BLACKBUTTON_FILE='image_buttonblackright_1x42x1x40.png'
+MID_BLACKBUTTON_FILE='image_buttonblackmid_1x42x1x40.png'
+
+LEFT_GREENBUTTON_FILE='image_buttongreenleft_1x42x1x40.png'
+RIGHT_GREENBUTTON_FILE='image_buttongreenright_1x42x1x40.png'
+MID_GREENBUTTON_FILE='image_buttongreenmid_1x42x1x40.png'
+
+OPTION_SCREEN_FILE='image_option_1x600x1x800.png'
+DRAG_BAR_FILE='image_scrollbar_1x21x1x202.png'
+BACK_BUTTON_FILE='image_backbutton_1x40x1x80.png'
+
+CHECKBOX_FILE='image_checkbox_1x20x2x20.png'
+
+
+#----Mission window--------------------------
+DRAG_BAR_FILE='image_scrollbar_1x21x1x202.png'
+MISSION_SCREEN_FILE='image_missionselect_1x600x1x800.png'
+MISSION_LIST_FILE='image_listbox_1x400x1x220.png'
+TIPBOX_FILE='image_tipbox_1x45x1x370.png'
+NEXTBUTTON_FILE='image_nextbutton_1x40x1x80.png'
+TEXT_BOX_FILE='image_textbox_1x130x1x340.png'
+RETRY_BUTTON_FILE='image_retrybutton_1x40x1x80.png'
+
+LEFT_BLACKBUTTON_FILE='image_buttonblackleft_1x42x1x40.png'
+RIGHT_BLACKBUTTON_FILE='image_buttonblackright_1x42x1x40.png'
+MID_BLACKBUTTON_FILE='image_buttonblackmid_1x42x1x40.png'
+
+LEFT_GREENBUTTON_FILE='image_buttongreenleft_1x42x1x40.png'
+RIGHT_GREENBUTTON_FILE='image_buttongreenright_1x42x1x40.png'
+MID_GREENBUTTON_FILE='image_buttongreenmid_1x42x1x40.png'
+
+#---Game over screen---------------
+WIN_SCREEN_FILE='image_winscreen_1x600x1x800.png'
+FAIL_SCREEN_FILE='image_failscreen_1x600x1x800.png'
+
+
+#----Main screen--------------------------
+MAIN_SCREEN_FILE='image_main_1x600x1x800.png'
+START_BUTTON_FILE='image_startbutton_1x40x1x80.png'
+CREDIT_BUTOTN_FILE='image_creditbutton_1x40x1x80.png'
+
+CREDIT_SCREEN_FILE='image_credits_1x600x1x800.png'
+
+#----Game interface--------------------------
+def createMenuButton():
+
+    abpath=os.path.join(PATH,MENU_BUTTON_FILE)
+    menu_button_image=pygame.image.load(abpath).convert()
+    menu_button_image_info=generals.interpName(MENU_BUTTON_FILE)
+    menu_button_image=generals.scaleImage(menu_button_image,menu_button_image_info)
+
+    menu_button=button.MenuButton(menu_button_image,menu_button_image_info,\
+            (0,0),'menu')
+    return menu_button
+
+def createScrollMenu(scene,level):
+
+    abpath=os.path.join(PATH,SCROLL_BAR_FILE)
+    scrollbar_image=pygame.image.load(abpath).convert()
+    scrollbar_image_info=generals.interpName(SCROLL_BAR_FILE)
+
+    abpath=os.path.join(PATH,LEFT_SCROLL_FILE)
+    left_scroll_image=pygame.image.load(abpath).convert_alpha()
+    left_scroll_info=generals.interpName(LEFT_SCROLL_FILE)
+    left_scroll_image=generals.scaleImage(left_scroll_image,left_scroll_info)
+
+    abpath=os.path.join(PATH,RIGHT_SCROLL_FILE)
+    right_scroll_image=pygame.image.load(abpath).convert_alpha()
+    right_scroll_info=generals.interpName(RIGHT_SCROLL_FILE)
+    right_scroll_image=generals.scaleImage(right_scroll_image,right_scroll_info)
+
+    weapon_buttons=[]
+
+    for ii in level.weapons_in_level:
+
+        file_name='image_'+ii+'button_1x35x3x35.png'
+        abpath=os.path.join(PATH,file_name)
+        image_info=generals.interpName(file_name)
+        button_image=pygame.image.load(abpath).convert()
+        button_image=generals.scaleImage(button_image,image_info)
+
+        buttonii=button.AddTroopButton(world=scene,price=weapons.\
+                WEAPON_PRICES[ii],images=button_image,\
+                image_info=image_info,topleft=(0,0),text=ii,\
+                active=True)
+        weapon_buttons.append(buttonii)
+
+    scroll_bar=button.ScrollMenu(scrollbar_image,(60,0),\
+            (left_scroll_image,left_scroll_info),\
+            (right_scroll_image,right_scroll_info),\
+            weapon_buttons,\
+            auto_scale=True)
+
+    return scroll_bar
+
+
+def createIntelBar():
+
+    abpath=os.path.join(PATH,INTEL_BAR_FILE)
+    intel_bar_image=pygame.image.load(abpath).convert()
+
+    intel_bar=button.RollText(intel_bar_image,None,(280,0),'')
+
+    return intel_bar
+
+def createMoneyBar():
+
+    abpath=os.path.join(PATH,MONEY_BAR_FILE)
+    money_bar_image=pygame.image.load(abpath).convert()
+
+    #----Money window--------------------------
+    money_bar=button.NumberBox(money_bar_image,(640,0),value=0,\
+            text_topleft_shift=(30,0),font_size=45)
+
+    return money_bar
+
+def createHqBar():
+
+    abpath=os.path.join(PATH,HQ_BAR_FILE)
+    hq_bar_image=pygame.image.load(abpath).convert()
+
+    #----Hq life window--------------------------
+    hq_bar=button.NumberBox(hq_bar_image,(730,0),value=1,\
+            text_topleft_shift=(30,0),font_size=45)
+
+    return hq_bar
+
+#----Pause menu interface--------------------------
+def createResumeButton():
+
+    abpath=os.path.join(PATH,RESUME_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(170,40))
+
+    buttonii=button.ResumeButton(button_image,\
+            (320,138))
+    return buttonii
+
+def createOptionButton():
+
+    abpath=os.path.join(PATH,OPTION_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(170,45))
+
+    buttonii=button.OptionButton(button_image,\
+            (320,185))
+    return buttonii
+
+def createToMainButton():
+
+    abpath=os.path.join(PATH,TOMAIN_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(170,40))
+
+    buttonii=button.ToMainButton(button_image,\
+            (320,237))
+    return buttonii
+
+def createExitButton(topleft):
+
+    abpath=os.path.join(PATH,EXIT_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(170,40))
+
+    buttonii=button.ExitButton(button_image,topleft)
+    return buttonii
+
+def createPauseScreen():
+    abpath=os.path.join(PATH,PAUSE_SCREEN_FILE)
+    background_image=pygame.image.load(abpath).convert_alpha()
+    resume=createResumeButton()
+    option=createOptionButton()
+    tomain=createToMainButton()
+    exit=createExitButton((320,309))
+
+    return button.PauseScreen(background_image,resume,option,tomain,exit)
+
+#----Option menu interface--------------------------
+def createDragBar(topleft):
+    abpath=os.path.join(PATH,DRAG_BAR_FILE)
+    bar_image=pygame.image.load(abpath).convert_alpha()
+    bar_image_info=generals.interpName(DRAG_BAR_FILE)
+    #bar_image=generals.scaleImage(bar_image,bar_image_info)
+    bar_image=pygame.transform.scale(bar_image,(250,10))
+
+    abpath=os.path.join(PATH,LEFT_BLACKBUTTON_FILE)
+    left_blackbutton_image=pygame.image.load(abpath).convert_alpha()
+    left_blackbutton_image_info=generals.interpName(LEFT_BLACKBUTTON_FILE)
+    #left_blackbutton_image=generals.scaleImage(left_blackbutton_image,left_blackbutton_image_info)
+    left_blackbutton_image=pygame.transform.scale(left_blackbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,RIGHT_BLACKBUTTON_FILE)
+    right_blackbutton_image=pygame.image.load(abpath).convert_alpha()
+    right_blackbutton_image_info=generals.interpName(RIGHT_BLACKBUTTON_FILE)
+    #right_blackbutton_image=generals.scaleImage(right_blackbutton_image,right_blackbutton_image_info)
+    right_blackbutton_image=pygame.transform.scale(right_blackbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,MID_BLACKBUTTON_FILE)
+    mid_blackbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(MID_BLACKBUTTON_FILE)
+    #mid_blackbutton_image=generals.scaleImage(mid_blackbutton_image,image_info)
+    mid_blackbutton_image=pygame.transform.scale(mid_blackbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,LEFT_GREENBUTTON_FILE)
+    left_greenbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(LEFT_GREENBUTTON_FILE)
+    #left_greenbutton_image=generals.scaleImage(left_greenbutton_image,image_info)
+    left_greenbutton_image=pygame.transform.scale(left_greenbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,RIGHT_GREENBUTTON_FILE)
+    right_greenbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(RIGHT_GREENBUTTON_FILE)
+    #right_greenbutton_image=generals.scaleImage(right_greenbutton_image,image_info)
+    right_greenbutton_image=pygame.transform.scale(right_greenbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,MID_GREENBUTTON_FILE)
+    mid_greenbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(MID_GREENBUTTON_FILE)
+    #mid_greenbutton_image=generals.scaleImage(mid_greenbutton_image,image_info)
+    mid_greenbutton_image=pygame.transform.scale(mid_greenbutton_image,(20,21))
+
+    dragbar=button.DragBar(bar_image,bar_topleft=topleft,\
+            left_image=left_blackbutton_image,\
+            right_image=right_blackbutton_image,\
+            green_midbutton_image=mid_greenbutton_image,\
+            green_leftbutton_image=left_greenbutton_image,\
+            green_rightbutton_image=right_greenbutton_image,\
+            discretized=False)
+
+    return dragbar
+
+
+def createBackButton(text,topleft):
+
+    abpath=os.path.join(PATH,BACK_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(150,30))
+
+    buttonii=button.BackButton(button_image,topleft=topleft,text=text)
+    return buttonii
+
+def createCheckBox(topleft):
+    abpath=os.path.join(PATH,CHECKBOX_FILE)
+    button_image=pygame.image.load(abpath).convert_alpha()
+    info=generals.interpName(CHECKBOX_FILE)
+    button_image=generals.scaleImage(button_image,info)
+
+    checkbox=button.CheckBox(button_image,info,topleft=topleft)
+    return checkbox
+
+def createOptionScreen():
+    abpath=os.path.join(PATH,OPTION_SCREEN_FILE)
+    background_image=pygame.image.load(abpath).convert_alpha()
+
+    music_volume_bar=createDragBar((276,165))
+    effect_volume_bar=createDragBar((276,235))
+
+    checkbox=createCheckBox((440,270))
+    back_button=createBackButton('backtopause',(333,347))
+
+    return button.OptionScreen(background_image,music_volume_bar,\
+            effect_volume_bar,checkbox,back_button)
+
+
+
+#----Mission menu interface--------------------------
+
+def createBackButton2(topleft):
+
+    abpath=os.path.join(PATH,BACK_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(81,20))
+
+    buttonii=windows.BackButton2(button_image,topleft=topleft)
+    return buttonii
+
+def createGoButton(topleft):
+    abpath=os.path.join(PATH,NEXTBUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(81,20))
+
+    buttonii=windows.GoButton(button_image,topleft=topleft)
+    return buttonii
+
+def createDifficultyBar(topleft):
+
+    abpath=os.path.join(PATH,DRAG_BAR_FILE)
+    bar_image=pygame.image.load(abpath).convert_alpha()
+    bar_image_info=generals.interpName(DRAG_BAR_FILE)
+    #bar_image=generals.scaleImage(bar_image,bar_image_info)
+    bar_image=pygame.transform.scale(bar_image,(130,10))
+
+    abpath=os.path.join(PATH,LEFT_BLACKBUTTON_FILE)
+    left_blackbutton_image=pygame.image.load(abpath).convert_alpha()
+    left_blackbutton_image_info=generals.interpName(LEFT_BLACKBUTTON_FILE)
+    #left_blackbutton_image=generals.scaleImage(left_blackbutton_image,left_blackbutton_image_info)
+    left_blackbutton_image=pygame.transform.scale(left_blackbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,RIGHT_BLACKBUTTON_FILE)
+    right_blackbutton_image=pygame.image.load(abpath).convert_alpha()
+    right_blackbutton_image_info=generals.interpName(RIGHT_BLACKBUTTON_FILE)
+    #right_blackbutton_image=generals.scaleImage(right_blackbutton_image,right_blackbutton_image_info)
+    right_blackbutton_image=pygame.transform.scale(right_blackbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,MID_BLACKBUTTON_FILE)
+    mid_blackbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(MID_BLACKBUTTON_FILE)
+    #mid_blackbutton_image=generals.scaleImage(mid_blackbutton_image,image_info)
+    mid_blackbutton_image=pygame.transform.scale(mid_blackbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,LEFT_GREENBUTTON_FILE)
+    left_greenbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(LEFT_GREENBUTTON_FILE)
+    #left_greenbutton_image=generals.scaleImage(left_greenbutton_image,image_info)
+    left_greenbutton_image=pygame.transform.scale(left_greenbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,RIGHT_GREENBUTTON_FILE)
+    right_greenbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(RIGHT_GREENBUTTON_FILE)
+    #right_greenbutton_image=generals.scaleImage(right_greenbutton_image,image_info)
+    right_greenbutton_image=pygame.transform.scale(right_greenbutton_image,(20,21))
+
+    abpath=os.path.join(PATH,MID_GREENBUTTON_FILE)
+    mid_greenbutton_image=pygame.image.load(abpath).convert_alpha()
+    image_info=generals.interpName(MID_GREENBUTTON_FILE)
+    #mid_greenbutton_image=generals.scaleImage(mid_greenbutton_image,image_info)
+    mid_greenbutton_image=pygame.transform.scale(mid_greenbutton_image,(20,21))
+
+    levels={0:'Come on',\
+            1:'Low',\
+            2:'Mid',\
+            3:'High',\
+            4:'Are You Sure?'}
+
+    diff_bar=windows.DiffiBar(bar_image,topleft,left_blackbutton_image,\
+                mid_blackbutton_image,right_blackbutton_image,\
+                left_greenbutton_image,mid_greenbutton_image,\
+                right_greenbutton_image,levels)
+
+    return diff_bar
+
+
+def createMissionScreen(level_pack):
+    abpath=os.path.join(PATH,MISSION_SCREEN_FILE)
+    background=pygame.image.load(abpath).convert_alpha()
+
+    abpath=os.path.join(PATH,MISSION_LIST_FILE)
+    list_box_image=pygame.image.load(abpath).convert_alpha()
+
+    abpath=os.path.join(PATH,TIPBOX_FILE)
+    tip_box_image=pygame.image.load(abpath).convert_alpha()
+    
+    abpath=os.path.join(PATH,TEXT_BOX_FILE)
+    text_box_image=pygame.image.load(abpath).convert_alpha()
+
+    abpath=os.path.join(PATH,UP_SCROLL_FILE)
+    up_scroll_image=pygame.image.load(abpath).convert_alpha()
+    up_scroll_info=generals.interpName(UP_SCROLL_FILE)
+    up_scroll_image=generals.scaleImage(up_scroll_image,up_scroll_info)
+
+    abpath=os.path.join(PATH,DOWN_SCROLL_FILE)
+    down_scroll_image=pygame.image.load(abpath).convert_alpha()
+    down_scroll_info=generals.interpName(DOWN_SCROLL_FILE)
+    down_scroll_image=generals.scaleImage(down_scroll_image,down_scroll_info)
+
+    back_button=createBackButton2((114,500))
+    next_button=createGoButton((457,500))
+
+    difficulty_bar=createDifficultyBar((551,444))
+
+    mission_screen=windows.MissionScreen(background,level_pack,\
+            list_box_image,tip_box_image,text_box_image,(up_scroll_image,up_scroll_info),\
+            (down_scroll_image,down_scroll_info),\
+            difficulty_bar,back_button,next_button)
+
+    return mission_screen
+
+def createRetrybutton(topleft):
+
+    abpath=os.path.join(PATH,RETRY_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(81,20))
+
+    buttonii=windows.RetryButton(button_image,topleft=topleft)
+
+    return buttonii
+
+def createGameOver():
+    abpath=os.path.join(PATH,WIN_SCREEN_FILE)
+    win_screen_image=pygame.image.load(abpath).convert_alpha()
+    abpath=os.path.join(PATH,FAIL_SCREEN_FILE)
+    fail_screen_image=pygame.image.load(abpath).convert_alpha()
+
+    retry_button=createRetrybutton((600,400))
+    back_button=createBackButton2((400,400))
+    next_button=createGoButton((600,400))
+
+    gameover_box=windows.GameOverBox(win_screen_image,fail_screen_image,\
+		    retry_button,back_button,next_button)
+    return gameover_box
+
+    
+
+def createStartButton(topleft):
+    abpath=os.path.join(PATH,START_BUTTON_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(170,40))
+
+    buttonii=button.StartButton(button_image,topleft)
+    return buttonii
+
+
+def createCreditButton(topleft):
+    abpath=os.path.join(PATH,CREDIT_BUTOTN_FILE)
+    button_image=pygame.image.load(abpath).convert()
+    button_image=pygame.transform.scale(button_image,(170,40))
+
+    buttonii=button.CreditButton(button_image,topleft)
+    return buttonii
+
+def createCreditScreen():
+    abpath=os.path.join(PATH,CREDIT_SCREEN_FILE)
+    background=pygame.image.load(abpath).convert_alpha()
+
+    back_button=createBackButton2((130,500))
+    credit_screen=windows.CreditScreen(background,back_button)
+
+    return credit_screen
+
+def createMainScreen():
+
+    abpath=os.path.join(PATH,MAIN_SCREEN_FILE)
+    background=pygame.image.load(abpath).convert_alpha()
+    background=pygame.transform.scale(background,(800,600))
+
+    start_button=createStartButton((420,300))
+    credit_button=createCreditButton((420,360))
+    exit_button=createExitButton((420,420))
+
+    main_screen=windows.MainScreen(background,start_button,credit_button,\
+            exit_button)
+    return main_screen
+
+

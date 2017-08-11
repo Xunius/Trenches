@@ -1,0 +1,1097 @@
+# -*- coding: utf-8 -*-
+'''A button class.
+
+'''
+
+from gameobjects.vector2 import Vector2
+from generals import *
+from pygame.locals import *
+import pygame
+import copy
+import cus_font
+
+E_FONT=cus_font.E_FONT_PATH4
+C_FONT=cus_font.C_FONT_PATH
+
+
+class NumberBox(object):
+    def __init__(self,image,topleft,value,text_topleft_shift=(0,0),\
+            color=(255,255,255),font_size=25):
+
+        self.image=image
+        self.topleft=Vector2(topleft)
+        self.text_topleft_shift=text_topleft_shift
+        self.text_topleft=self.topleft+text_topleft_shift
+
+        self.value=value
+        self.color=color
+        self.font_size=font_size
+
+        self.size=self.image.get_size()
+
+        #----Font--------------------------
+        self.font=pygame.font.Font(E_FONT,self.font_size)
+
+        self.blitText()
+
+    @property
+    def text_size(self):
+        return self.text_surface.get_size()
+
+    @property
+    def text(self):
+        return str(self.value)
+
+    def blitText(self):
+        self.text_surface=self.font.render(self.text,True,self.color)
+
+
+    #----Auto shrink to fit in box--------------------------
+    def autoShrink(self):
+        while self.text_size[0] >= self.size[0]-self.text_topleft_shift[0] or\
+                self.text_size[1] >= self.size[1]-self.text_topleft_shift[1]:
+
+            self.font_size-=2
+            self.font=pygame.font.Font(E_FONT,self.font_size)
+            
+            self.blitText()
+
+            if self.font_size<=1:
+                break
+
+        self.text_topleft[1]=(self.size[1]-self.text_size[1])/2.+self.topleft[1]
+
+    def update(self,value,surface):
+        if value!=self.value:
+            self.value=value
+            self.blitText()
+            self.autoShrink()
+
+        surface.blit(self.image,self.topleft)
+        surface.blit(self.text_surface,self.text_topleft)
+
+
+class Button(object):
+
+    def __init__(self,images,image_info,topleft,text='button',active=True):
+
+        self.images=images
+        self.image_info=image_info   #could be None if image is a single image.
+        self.topleft=Vector2(*topleft)
+        self.text=text
+        self.active=active
+        self.isdown=False
+
+        #----Window Rect area where button is valid----------------
+        self.valid_area=None
+
+        if self.image_info is not None:
+            self.images=splitImage(images,image_info)
+
+            if len(self.images)==1:
+                self.image=self.images[0]
+            else:
+                #----Use the 1st image as button up, 2nd as button down,
+                # 3rd as deactivated----
+                self.selectFrame()
+        else:
+            self.image=images
+
+        self.size=self.image.get_size()
+        self.pos_center=topleft2Center(topleft=self.topleft,size=self.size)
+        self.rect=Rect(self.topleft[0],self.topleft[1],\
+                self.size[0],self.size[1])
+
+    def selectFrame(self):
+
+        if self.active:
+            if self.isdown:
+                self.image=self.images[1]
+            else:
+                self.image=self.images[0]
+        else:
+            self.image=self.images[2]
+
+
+    def draw(self,surface):
+        self.selectFrame()
+        surface.blit(self.image,self.topleft)
+
+    def isOver(self,point):
+        '''Check wether mouse is over button
+        '''
+        if self.valid_area is None:
+
+            in_x=point[0]>=self.topleft[0] and\
+                    point[0]<=self.topleft[0]+self.size[0]
+            in_y=point[1]>=self.topleft[1] and\
+                    point[1]<=self.topleft[1]+self.size[1]
+        else:
+            in_x=point[0]>=self.topleft[0] and\
+                    point[0]<=self.topleft[0]+self.size[0] and\
+                    point[0]>=self.valid_area[0] and\
+                    point[0]<=self.valid_area[0]+self.valid_area[2]
+            in_y=point[1]>=self.topleft[1] and\
+                    point[1]<=self.topleft[1]+self.size[1] and\
+                    point[1]>=self.valid_area[1] and\
+                    point[1]<=self.valid_area[1]+self.valid_area[3]
+
+        return in_x and in_y
+
+    def down_actions(self):
+        pass
+
+
+    def up_actions(self):
+        pass
+
+
+    def actions(self,mouse_event,func=None):
+        '''
+        <mouse_event>:(mouse_event_type,button,point):
+            <mouse_event_type>: 'mouse_down' or 'mouse_up'.
+            <button>: button number, 1 for left, 2 for mid, 3 for right.
+            <point>: mouse position
+        '''
+
+        mouse_event_type,button,point=mouse_event
+
+        if self.active and self.isOver(point):
+            if mouse_event_type=='mouse_down' and self.isdown is False:
+                self.isdown=True
+                self.selectFrame()
+                self.down_actions()
+            elif mouse_event_type=='mouse_up' and self.isdown:
+                self.isdown=False
+                self.selectFrame()
+                self.up_actions()
+
+
+
+class MenuButton(Button):
+    def __init__(self,images,image_info,topleft,text='button',active=True):
+        Button.__init__(self,images,image_info,topleft,text='button',active=True)
+
+        self.PAUSE_EVENT=None
+
+    def up_actions(self):
+        self.PAUSE_EVENT=USEREVENT
+        pause_event=pygame.event.Event(self.PAUSE_EVENT,message='')
+        pygame.event.post(pause_event)
+
+
+
+
+
+class AddTroopButton(Button):
+
+    def __init__(self,world,price,images,image_info,topleft,text='button',active=True):
+
+        self.world=world
+        self.price=price
+
+        Button.__init__(self,images,image_info,topleft,text,active)
+
+        self.font=pygame.font.Font(E_FONT,15)
+        self.price_surface=self.font.render('$'+str(self.price),True,(255,255,255))
+        #self.price_surface_size=self.price_surface.get_size()
+
+        self.price_surface_topleft=(self.size[0]*0.1,self.size[1]*0.7)
+        for ii in self.images:
+            ii.blit(self.price_surface,dest=self.price_surface_topleft)
+
+
+    @property
+    def active(self):
+        return self.world.money>=self.price
+    @active.setter
+    def active(self,value):
+        self._active=value
+
+    def down_actions(self):
+        #print 'pick up a troop!'
+        return self.text
+    def up_actions(self):
+        #print ' ready to place picked up troop!'
+        return self.text
+
+    def actions(self,mouse_event,func=None):
+        '''
+        <mouse_event>:(mouse_event_type,button,point):
+            <mouse_event_type>: 'mouse_down' or 'mouse_up'.
+            <button>: button number, 1 for left, 2 for mid, 3 for right.
+            <point>: mouse position
+
+        Return the button'text if it is active and get pressed.
+        Otherwise return None.
+        '''
+
+        mouse_event_type,button,point=mouse_event
+        result=None
+
+        if self.active and self.isOver(point):
+            if mouse_event_type=='mouse_down' and self.isdown is False:
+                self.isdown=True
+                self.selectFrame()
+                result=self.down_actions()
+            elif mouse_event_type=='mouse_up' and self.isdown:
+                self.isdown=False
+                self.selectFrame()
+                result=self.up_actions()
+            return result
+        else:
+            return None
+
+        
+
+
+
+class PauseButton(Button):
+    def __init__(self,images,image_info,topleft,paused):
+        Button.__init__(self,images,image_info,topleft,'pause')
+        self.paused=paused
+
+    def down_actions(self):
+        return not self.paused
+        
+
+class RollText(Button):
+    def __init__(self,images,image_info,topleft,text,color=(255,255,255),font_size=25):
+
+        Button.__init__(self,images,image_info,topleft,text)
+
+        self.rolling_speed=0.05    #pixels per millisecond
+        self.font_size=font_size
+        self.color=color
+        self.edge=(5,5)
+
+        #----Font--------------------------
+        self.font=pygame.font.Font(C_FONT,self.font_size)
+
+        #----Initiate topleft of text to the upper-right corner of the background bar,
+        # using RELATIVE distance wrt self.topleft
+        self.default_text_topleft=Vector2(self.size[0]+1,\
+                (self.size[1]-self.font.get_height())/2.)
+    	self.text_topleft=(self.default_text_topleft[0],\
+			self.default_text_topleft[1])
+
+        #----Update text--------------------------
+        self.updateText(text)
+
+        #----Clip out a slightly small area of self.image to blit text surface
+        self.text_blit_surface=self.image.subsurface(self.edge[0],self.edge[1],\
+		self.size[0]-2.*self.edge[0],self.size[1]-2.*self.edge[1])
+
+        #----Active intel--------------------------
+        self.active_intel=None
+        
+        self.shift=Vector2(-self.rolling_speed*30.,0)
+
+    def updateText(self,text):
+
+        self.text=text
+        if text is not None:
+            self.text_surface=self.font.render(self.text,True,self.color)
+            self.text_size=self.text_surface.get_size()
+    	    self.text_topleft=(self.default_text_topleft[0],\
+			self.default_text_topleft[1])
+
+    def updateByIntel(self,intel):
+        if intel is not None:
+            if self.active_intel is not intel:
+                self.color=intel.color
+                self.font_size=intel.font_size
+                self.font=pygame.font.Font(C_FONT,self.font_size)
+                self.updateText(intel.text)
+                self.rolling_speed=float(self.size[0]+self.text_size[0]+1)/\
+                        intel.time   #intel.time in milliseconds
+                #self.shift=Vector2(-self.rolling_speed*33,0)  #use 33milliseconds
+        	self.text_topleft=(self.default_text_topleft[0],\
+				self.default_text_topleft[1])
+    	        self.active_intel=intel
+        else:
+            self.text=None
+
+
+
+    def draw(self,time_passed,surface):
+
+        if self.text is not None:
+
+            #----Roll from right to left--------------------------
+            self.shift=Vector2(-self.rolling_speed*time_passed,0)
+            self.text_topleft+=self.shift
+
+            if self.text_topleft[0]<=-self.text_size[0]:
+        	self.text_topleft=(self.default_text_topleft[0],\
+				self.default_text_topleft[1])
+
+            #--Necessary to create a copy of the blit surface every frame,
+            # otherwise all frames will overlap with one another ---------------
+            blit_surface_copy=self.text_blit_surface.copy()
+            blit_surface_copy.blit(self.text_surface,dest=self.text_topleft)
+
+            surface.blit(self.image,self.topleft)
+            surface.blit(blit_surface_copy,self.topleft+self.edge)
+        else:
+            surface.blit(self.image,self.topleft)
+
+
+
+
+class ScrollMenu():
+
+    def __init__(self,image,topleft,left_scroll,right_scroll,\
+            buttons,auto_scale=False):
+
+        self.image=image
+        self.topleft=Vector2(topleft)
+        self.size=image.get_size()
+        self.pos_center=topleft2Center(topleft=topleft,size=self.size)
+        self.rect=Rect(self.topleft[0],self.topleft[1],self.size[0],\
+                self.size[1])
+        self.auto_scale=auto_scale
+
+        #----Dict to store all buttons--------------------------
+        self.buttons={}
+        self.button_keys=[]
+        for ii in buttons:
+            self.buttons[ii.text]=ii
+            self.button_keys.append(ii.text)
+
+        #----Automatically scale buttons according to self.image--------
+        if self.auto_scale:
+            for ii in self.buttons.values():
+                #print 'ii.size',ii.size
+                ii.image=pygame.transform.scale(ii.image,(ii.size[0],int(self.size[1]*0.8)))
+                ii.size=(ii.size[0],int(self.size[1]*0.8))
+                #print 'ii.size',ii.size
+                #print '\n'
+
+        #----Size of a single button--------------------------
+        self.single_button_size=buttons[0].size
+        #print 'single size',self.single_button_size
+
+        #----Distance from the topleft corner of the 1st button to the topleft of
+        # menu bar--------------------------
+        self.edge=Vector2(4,self.size[1]*0.1)
+
+        #----When too many buttons to display-------------------------
+        if (self.edge[0]+self.single_button_size[0])*len(self.buttons)\
+                >=self.size[0]:
+
+            left_scroll_image=left_scroll[0]
+            left_scroll_info=left_scroll[1]
+
+            #----Create scrolling buttons--------------------------
+            #left_scroll_image=pygame.image.load(LEFT_SCROLL_FILE).convert_alpha()
+            #left_scroll_info=interpName(LEFT_SCROLL_FILE)
+            self.left_scroll=Button(left_scroll_image,left_scroll_info,self.topleft,\
+                    text='left')
+            self.buttons['left']=self.left_scroll
+            self.left_scroll.active=False
+
+            right_scroll_image=right_scroll[0]
+            right_scroll_info=right_scroll[1]
+            #right_scroll_image=pygame.image.load(RIGHT_SCROLL_FILE).convert_alpha()
+            #right_scroll_info=interpName(RIGHT_SCROLL_FILE)
+            right_topleft=self.topleft+Vector2(self.size[0]-\
+                    self.left_scroll.size[0],0)
+            self.right_scroll=Button(right_scroll_image,right_scroll_info,\
+                    right_topleft,text='right')
+            self.buttons['right']=self.right_scroll
+            self.right_scroll.active=True
+
+            self.scroll_speed=1.
+        
+        #----Set topleft positions for buttons--------------------------
+        if 'left' in self.buttons.keys():
+
+            left_start=self.topleft+(self.left_scroll.size[0],0)+\
+                    self.edge
+
+            self.button_blit_surface=self.image.subsurface(\
+                    self.left_scroll.size[0],0,\
+                    self.size[0]-2.*self.left_scroll.size[0],\
+                    self.size[1])
+            self.button_blit_surface_topleft=Vector2(self.topleft[0]+\
+                    self.left_scroll.size[0],self.topleft[1])
+
+            for ii in range(len(self.button_keys)):
+                button=self.buttons[self.button_keys[ii]]
+                button.topleft=left_start+\
+                        Vector2(ii*(self.single_button_size[0]+self.edge[0]),0)
+                button.valid_area=\
+                        self.button_blit_surface.get_rect().move(*self.button_blit_surface_topleft)
+
+
+        else:
+            for ii in range(len(self.button_keys)):
+                button=self.buttons[self.button_keys[ii]]
+                button.topleft=self.topleft+self.edge+\
+                        (ii*(self.single_button_size[0]+self.edge[0]),0)
+                #button.number.topleft=button.topleft+(0.7*button.size[0],0.7*button.size[1])
+
+            self.button_blit_surface=self.image.subsurface(Rect(0,0,\
+                    self.size[0],self.size[1]))
+            self.button_blit_surface_topleft=self.topleft
+
+    def draw(self,surface):
+        blit_surface=self.button_blit_surface.copy()
+
+        for ii in self.buttons.values():
+            #----Blit to the RELATIVE location wrt self.button_blit_surface_topleft
+            ii.selectFrame()
+            blit_surface.blit(ii.image,dest=ii.topleft-\
+                    self.button_blit_surface_topleft)
+
+        surface.blit(self.image,self.topleft)
+        if 'left' in self.buttons.keys():
+            self.buttons['left'].draw(surface)
+            self.buttons['right'].draw(surface)
+        surface.blit(blit_surface,self.button_blit_surface_topleft)
+
+    def isOver(self,point):
+        buttonover=None
+
+        for ii in self.buttons.values():
+            if ii.isOver(point):
+                buttonover=ii.text
+                break
+        return buttonover
+
+    def buttonAction(self,mouse_event,time_passed):
+
+        mouse_event_type,button,point=mouse_event
+
+        button=self.isOver(point)
+
+        if button is not None:
+
+            if mouse_event_type=='mouse_down':
+                if button is 'left':
+                    self.scrollButtons(time_passed,'left')
+                elif button is 'right':
+                    self.scrollButtons(time_passed,'right')
+                else:
+                    button_pressed=self.buttons[button].actions(mouse_event)
+            elif mouse_event_type=='mouse_up':
+                if button is not 'left' and button is not 'right':
+                    button_pressed=self.buttons[button].actions(mouse_event)
+                    return button_pressed
+
+
+    def scrollButtons(self,time_passed,direction):
+        firstbutton=self.buttons[self.button_keys[0]]
+        left_reference_point=self.topleft[0]+self.left_scroll.size[0]+self.edge[0]
+
+        if firstbutton.topleft[0] >= left_reference_point:
+            self.left_scroll.active=False
+        else:
+            self.left_scroll.active=True
+
+        lastbutton=self.buttons[self.button_keys[-1]]
+        right_reference_point=self.topleft[0]+self.size[0]-self.left_scroll.size[0]-\
+                self.edge[0]-self.single_button_size[0]
+
+        if lastbutton.topleft[0] <= right_reference_point:
+            self.right_scroll.active=False
+        else:
+            self.right_scroll.active=True
+
+        if direction=='left' and self.left_scroll.active:
+            max_shift=left_reference_point-firstbutton.topleft[0]
+            for ii in self.button_keys:
+                button=self.buttons[ii]
+                hori_shift=time_passed*self.scroll_speed
+                button.topleft+=Vector2(min(hori_shift,max_shift),0)
+
+        if direction=='right' and self.right_scroll.active:
+            max_shift=lastbutton.topleft[0]-right_reference_point
+            for ii in self.button_keys:
+                button=self.buttons[ii]
+                hori_shift=time_passed*self.scroll_speed
+                button.topleft-=Vector2(min(hori_shift,max_shift),0)
+
+        if firstbutton.topleft[0] >= left_reference_point:
+            self.left_scroll.active=False
+        else:
+            self.left_scroll.active=True
+        if lastbutton.topleft[0] <= right_reference_point:
+            self.right_scroll.active=False
+        else:
+            self.right_scroll.active=True
+
+                
+class SimpleButton(object):
+
+    def __init__(self,image,topleft,text='button',active=True):
+
+        self.image=image
+        self.topleft=Vector2(*topleft)
+        self.text=text
+        self.active=active
+        self.isdown=False
+
+        self.size=self.image.get_size()
+        self.pos_center=topleft2Center(topleft=self.topleft,size=self.size)
+        self.rect=Rect(self.topleft[0],self.topleft[1],\
+                self.size[0],self.size[1])
+
+    def draw(self,surface):
+        surface.blit(self.image,self.topleft)
+
+    def isOver(self,point):
+        '''Check wether mouse is over button
+        '''
+
+        in_x=point[0]>=self.topleft[0] and\
+                point[0]<=self.topleft[0]+self.size[0]
+        in_y=point[1]>=self.topleft[1] and\
+                point[1]<=self.topleft[1]+self.size[1]
+
+        return in_x and in_y
+
+    def down_actions(self):
+        #print 'button down action!!!',self.text
+        pass
+
+
+    def up_actions(self):
+        #print 'button up action!!!',self.text
+        pass
+
+
+    def actions(self,mouse_event):
+        '''
+        <mouse_event>:(mouse_event_type,button,point):
+            <mouse_event_type>: 'mouse_down' or 'mouse_up'.
+            <button>: button number, 1 for left, 2 for mid, 3 for right.
+            <point>: mouse position
+        '''
+
+        mouse_event_type,button,point=mouse_event
+
+        if self.active and self.isOver(point):
+            if mouse_event_type=='mouse_down' and self.isdown is False:
+                self.isdown=True
+                self.down_actions()
+            elif mouse_event_type=='mouse_up' and self.isdown:
+                self.isdown=False
+                self.up_actions()
+
+
+
+class ResumeButton(SimpleButton):
+
+    def __init__(self,image,topleft,text='resume',active=True):
+        SimpleButton.__init__(self,image,topleft,text,active)
+
+    def up_actions(self):
+        '''
+        resume_event_num=USEREVENT+3
+        resume_event=pygame.event.Event(resume_event_num,message='')
+        pygame.event.post(resume_event)
+        self.parent.event_nums['resume']=resume_event_num
+        '''
+        self.parent.button_pressed='resume'
+
+
+class OptionButton(SimpleButton):
+
+    def __init__(self,image,topleft,text='option',active=True):
+        SimpleButton.__init__(self,image,topleft,text,active)
+
+    def up_actions(self):
+        '''
+        option_event_num=USEREVENT+4
+        option_event=pygame.event.Event(option_event_num,message='')
+        pygame.event.post(option_event)
+        self.parent.event_nums['option']=option_event_num
+        '''
+        self.parent.button_pressed='option'
+
+
+class ToMainButton(SimpleButton):
+
+    def __init__(self,image,topleft,text='tomain',active=True):
+        SimpleButton.__init__(self,image,topleft,text,active)
+
+
+    def up_actions(self):
+        '''
+        tomain_event_num=USEREVENT+5
+        tomain_event=pygame.event.Event(tomain_event_num,message='')
+        pygame.event.post(tomain_event)
+        self.parent.event_nums['tomain']=tomain_event_num
+        '''
+        self.parent.button_pressed='tomain'
+
+
+class ExitButton(SimpleButton):
+
+    def __init__(self,image,topleft,text='exit',active=True):
+        SimpleButton.__init__(self,image,topleft,text,active)
+
+    def up_actions(self):
+        '''
+        exit_event_num=USEREVENT+6
+        exit_event=pygame.event.Event(exit_event_num,message='')
+        pygame.event.post(exit_event)
+        self.parent.event_nums['exit']=exit_event_num
+        '''
+        self.parent.button_pressed='exit'
+
+
+class PauseScreen(object):
+
+    def __init__(self,background,resume_button,option_button,\
+            main_button,exit_button):
+
+        self.background=background
+        self.resume_button=resume_button
+        self.option_button=option_button
+        self.main_button=main_button
+        self.exit_button=exit_button
+
+        self.buttons={'resume':self.resume_button,\
+                'option':self.option_button,\
+                'tomain':self.main_button,\
+                'exit':self.exit_button\
+                }
+        '''
+        self.event_nums={'resume':None,\
+                'option':None,\
+                'tomain':None,\
+                'exit':None}
+        '''
+        self.button_pressed=None
+        self.event_num=None
+
+        for ii in self.buttons.values():
+            ii.parent=self
+
+
+    def isOver(self,point):
+        buttonover=None
+
+        for ii in self.buttons.values():
+            if ii.isOver(point):
+                buttonover=ii.text
+                break
+        return buttonover
+
+    def buttonAction(self,mouse_event):
+
+        mouse_event_type,button,point=mouse_event
+
+        button=self.isOver(point)
+
+        if button is not None:
+            if mouse_event_type=='mouse_down':
+                self.buttons[button].actions(mouse_event)
+            elif mouse_event_type=='mouse_up':
+                self.buttons[button].actions(mouse_event)
+
+                #print 'button_pressed',self.button_pressed
+                self.event_num=USEREVENT+1
+                pause_event=pygame.event.Event(self.event_num)
+                pygame.event.post(pause_event)
+
+
+    def draw(self,surface):
+        surface.blit(self.background,(0,0))
+        for ii in self.buttons.values():
+            ii.draw(surface)
+
+
+
+class DragBar(object):
+    def __init__(self,bar_image,bar_topleft,left_image,\
+            right_image,green_midbutton_image,green_leftbutton_image,\
+            green_rightbutton_image,\
+            discretized=False):
+
+        self.bar_image=bar_image
+        self.bar_topleft=Vector2(bar_topleft)
+        self.left_image=left_image
+        self.right_image=right_image
+        self.green_midbutton_image=green_midbutton_image
+        self.green_leftbutton_image=green_leftbutton_image
+        self.green_rightbutton_image=green_rightbutton_image
+
+        self.discretized=discretized
+
+        self.bar_size=Vector2(self.bar_image.get_size())
+        self.button_size=self.green_midbutton_image.get_size()
+
+        self.left_topleft=self.bar_topleft-(self.button_size[0]/2.,\
+                (self.button_size[1]-self.bar_size[1])/2.)
+        self.right_topleft=self.bar_topleft+(self.bar_size[0],0)-(self.button_size[0]/2.,\
+                (self.button_size[1]-self.bar_size[1])/2.)
+
+        self.default_value=0.5
+        self.value=0.5
+        self.verti_center=self.bar_topleft[1]+0.5*self.bar_size[1]
+
+        self.button_pos=Vector2(self.bar_topleft[0]+self.default_value*self.bar_size[0],\
+                self.verti_center)
+
+    @property
+    def button_topleft(self):
+        return center2Topleft(center=self.button_pos,size=self.button_size)
+
+    @property
+    def active_button(self):
+        if self.value==0:
+            return self.green_leftbutton_image
+        elif self.value==1:
+            return self.green_rightbutton_image
+        else:
+            return self.green_midbutton_image
+
+
+
+    def clickAction(self,mouse_event):
+        mouse_event_type,button,point=mouse_event
+
+        if mouse_event_type=='mouse_down' and button==1:
+            if point[0]>=self.bar_topleft[0]-10 and\
+                    point[0]<=self.bar_topleft[0]+self.bar_size[0]+10 and\
+                    point[1]>=self.bar_topleft[1]-10 and \
+                    point[1]<=self.bar_topleft[1]+self.bar_size[1]+10:
+                if point[0]<=self.bar_topleft[0]:
+                    self.value=0.
+                    self.button_pos=Vector2(self.bar_topleft[0],self.verti_center)
+                elif point[0]>=self.bar_topleft[0]+self.bar_size[0]:
+                    self.value=1.
+                    self.button_pos=Vector2(self.bar_topleft[0]+self.bar_size[0],\
+                            self.verti_center)
+                else:
+                    self.value=(point[0]-self.bar_topleft[0])/self.bar_size[0]
+                    self.button_pos=Vector2(point[0],self.verti_center)
+
+
+        return self.value
+
+    def draw(self,surface):
+        surface.blit(self.bar_image,self.bar_topleft)
+        surface.blit(self.left_image,self.left_topleft)
+        surface.blit(self.right_image,self.right_topleft)
+        surface.blit(self.active_button,self.button_topleft)
+
+
+
+
+
+class OptionScreen(object):
+
+    def __init__(self,background,music_volume_bar,effect_volume_bar,\
+            checkbox,back_button):
+        self.background=background
+        self.effect_volume_bar=effect_volume_bar
+        self.music_volume_bar=music_volume_bar
+        self.checkbox=checkbox
+        self.back_button=back_button
+
+        self.buttons={'backtopause':self.back_button}
+        self.music_volume_bar.parent=self
+        self.effect_volume_bar.parent=self
+        self.back_button.parent=self
+        self.checkbox.parent=self
+
+        self.music_volume=self.music_volume_bar.value
+        self.effect_volume=self.effect_volume_bar.value
+
+        self.event_num=USEREVENT+2
+    @property
+    def fullscreen(self):
+        return self.checkbox.checked
+
+    def draw(self,surface):
+        surface.blit(self.background,(0,0))
+        self.effect_volume_bar.draw(surface)
+        self.music_volume_bar.draw(surface)
+        self.checkbox.draw(surface)
+        self.back_button.draw(surface)
+
+    def isOver(self,point):
+        buttonover=None
+
+        for ii in self.buttons.values():
+            if ii.isOver(point):
+                buttonover=ii.text
+                break
+        return buttonover
+
+    def buttonAction(self,mouse_event):
+
+        mouse_event_type,button,point=mouse_event
+
+        self.music_volume=self.music_volume_bar.clickAction(mouse_event)
+        self.effect_volume=self.effect_volume_bar.clickAction(mouse_event)
+        self.checkbox.actions(mouse_event)
+        self.back_button.actions(mouse_event)
+
+        '''
+        button=self.isOver(point)
+
+        if button is not None:
+            if mouse_event_type=='mouse_down':
+                self.buttons[button].actions(mouse_event)
+            elif mouse_event_type=='mouse_up':
+                self.buttons[button].actions(mouse_event)
+
+                if button=='backtopause':
+                    event=pygame.event.Event(self.event_num)
+                    pygame.event.post(event)
+        '''
+
+
+
+class BackButton(SimpleButton):
+
+    def __init__(self,image,topleft,text='back',active=True):
+        SimpleButton.__init__(self,image,topleft,text,active)
+
+    def up_actions(self):
+        event=pygame.event.Event(self.parent.event_num)
+        pygame.event.post(event)
+
+
+class CheckBox(object):
+
+    def __init__(self,images,image_info,topleft,checked=False):
+        self.images=images
+        self.image_info=image_info
+        self.topleft=Vector2(topleft)
+        self.checked=checked
+
+        self.images=splitImage(images,image_info)
+        self.image=self.images[self.image_index]
+        self.size=self.image.get_size()
+        self.isdown=False
+
+    @property
+    def image_index(self):
+        if self.checked:
+            return 1
+        else:
+            return 0
+
+    def draw(self,surface):
+        surface.blit(self.image,self.topleft)
+
+    def isOver(self,point):
+        '''Check wether mouse is over button
+        '''
+
+        in_x=point[0]>=self.topleft[0] and\
+                point[0]<=self.topleft[0]+self.size[0]
+        in_y=point[1]>=self.topleft[1] and\
+                point[1]<=self.topleft[1]+self.size[1]
+
+        return in_x and in_y
+
+    def down_actions(self):
+        #print 'button down action!!!',self.text
+        pass
+
+    def up_actions(self):
+        self.checked=not self.checked
+        self.image=self.images[self.image_index]
+
+
+    def actions(self,mouse_event):
+        '''
+        <mouse_event>:(mouse_event_type,button,point):
+            <mouse_event_type>: 'mouse_down' or 'mouse_up'.
+            <button>: button number, 1 for left, 2 for mid, 3 for right.
+            <point>: mouse position
+        '''
+        mouse_event_type,button,point=mouse_event
+
+        if self.isOver(point):
+            if mouse_event_type=='mouse_down' and self.isdown is False:
+                self.isdown=True
+                self.down_actions()
+            elif mouse_event_type=='mouse_up' and self.isdown:
+                self.isdown=False
+                self.up_actions()
+        
+
+
+
+class VScrollMenu():
+
+    def __init__(self,image,topleft,up_scroll,down_scroll,\
+            buttons,auto_scale=False):
+
+        self.image=image
+        self.topleft=Vector2(topleft)
+        self.size=image.get_size()
+        self.pos_center=topleft2Center(topleft=topleft,size=self.size)
+        self.rect=Rect(self.topleft[0],self.topleft[1],self.size[0],\
+                self.size[1])
+        #self.auto_scale=auto_scale
+
+        #----Dict to store all buttons--------------------------
+        self.buttons={}
+        self.button_keys=[]
+        for ii in buttons:
+            self.buttons[ii.text]=ii
+            self.button_keys.append(ii.text)
+
+        #----Automatically scale buttons according to self.image--------
+        '''
+        if self.auto_scale:
+            for ii in self.buttons.values():
+                #print 'ii.size',ii.size
+                ii.image=pygame.transform.scale(ii.image,(ii.size[0],int(self.size[1]*0.8)))
+                ii.size=(ii.size[0],int(self.size[1]*0.8))
+                #print 'ii.size',ii.size
+                #print '\n'
+        '''
+
+        #----Size of a single button--------------------------
+        self.single_button_size=buttons[0].size
+        #print 'single size',self.single_button_size
+
+        #----Distance from the topleft corner of the 1st button to the topleft of
+        # menu bar--------------------------
+        self.edge=Vector2(10,15)
+
+        #----When too many buttons to display-------------------------
+        if (self.edge[1]+self.single_button_size[1])*len(self.buttons)\
+                >=self.size[1]:
+
+            up_scroll_image=up_scroll[0]
+            up_scroll_info=up_scroll[1]
+
+            #----Create scrolling buttons--------------------------
+            #left_scroll_image=pygame.image.load(LEFT_SCROLL_FILE).convert_alpha()
+            #left_scroll_info=interpName(LEFT_SCROLL_FILE)
+            self.up_scroll=Button(up_scroll_image,up_scroll_info,\
+                    self.topleft+(self.size[0]-up_scroll_image.get_size()[0],0),\
+                    text='up')
+            self.buttons['up']=self.up_scroll
+            self.up_scroll.active=False
+
+            down_scroll_image=down_scroll[0]
+            down_scroll_info=down_scroll[1]
+            #right_scroll_image=pygame.image.load(RIGHT_SCROLL_FILE).convert_alpha()
+            #right_scroll_info=interpName(RIGHT_SCROLL_FILE)
+            #down_topleft=self.topleft+Vector2(self.size[0]-\
+            #        self.left_scroll.size[0],0)
+
+            down_topleft=self.up_scroll.topleft+(0,self.size[1]-down_scroll_image.get_size()[1])
+            self.down_scroll=Button(down_scroll_image,down_scroll_info,\
+                    down_topleft,text='down')
+            self.buttons['down']=self.down_scroll
+            self.down_scroll.active=True
+
+            self.scroll_speed=5.
+        
+        #----Set topleft positions for buttons--------------------------
+        for ii in range(len(self.button_keys)):
+            button=self.buttons[self.button_keys[ii]]
+            button.topleft=self.topleft+self.edge+\
+                    (0,ii*(self.single_button_size[1]+self.edge[1]))
+
+        self.button_blit_surface=self.image.subsurface(Rect(0,0,\
+                self.size[0],self.size[1]))
+        self.button_blit_surface_topleft=self.topleft
+
+        if 'up' in self.buttons.keys():
+
+            for ii in range(len(self.button_keys)):
+                button=self.buttons[self.button_keys[ii]]
+                button.valid_area=\
+                        self.button_blit_surface.get_rect().move(*self.button_blit_surface_topleft)
+
+    def draw(self,surface):
+        blit_surface=self.button_blit_surface.copy()
+
+        for ii in self.buttons.values():
+            #----Blit to the RELATIVE location wrt self.button_blit_surface_topleft
+            #ii.selectFrame()
+            blit_surface.blit(ii.image,dest=ii.topleft-\
+                    self.button_blit_surface_topleft)
+
+        surface.blit(self.image,self.topleft)
+        surface.blit(blit_surface,self.button_blit_surface_topleft)
+        if 'up' in self.buttons.keys():
+            self.buttons['up'].draw(surface)
+            self.buttons['down'].draw(surface)
+
+    def isOver(self,point):
+        buttonover=None
+
+        for ii in self.buttons.values():
+            if ii.isOver(point):
+                buttonover=ii.text
+                break
+        return buttonover
+
+    def buttonAction(self,mouse_event,time_passed):
+
+        mouse_event_type,button,point=mouse_event
+
+        button=self.isOver(point)
+
+        if button is not None:
+
+            if mouse_event_type=='mouse_down':
+                if button is 'up':
+                    self.scrollButtons(time_passed,'up')
+                elif button is 'down':
+                    self.scrollButtons(time_passed,'down')
+                else:
+                    button_pressed=self.buttons[button].actions(mouse_event)
+            elif mouse_event_type=='mouse_up':
+                if button is not 'up' and button is not 'down':
+                    button_pressed=self.buttons[button].actions(mouse_event)
+                    return button_pressed
+
+
+    def scrollButtons(self,time_passed,direction):
+        firstbutton=self.buttons[self.button_keys[0]]
+        top_reference_point=self.topleft[1]+self.edge[1]
+
+        if firstbutton.topleft[1] >= top_reference_point:
+            self.up_scroll.active=False
+        else:
+            self.up_scroll.active=True
+
+        lastbutton=self.buttons[self.button_keys[-1]]
+        bottom_reference_point=self.topleft[1]+self.size[1]-\
+                2*self.edge[1]
+
+        if lastbutton.topleft[1] <= bottom_reference_point:
+            self.down_scroll.active=False
+        else:
+            self.down_scroll.active=True
+
+        if direction=='up' and self.up_scroll.active:
+            max_shift=up_reference_point-firstbutton.topleft[1]
+            for ii in self.button_keys:
+                button=self.buttons[ii]
+                verti_shift=time_passed*self.scroll_speed
+                button.topleft+=Vector2(0,min(verti_shift,max_shift))
+
+        if direction=='down' and self.down_scroll.active:
+            max_shift=lastbutton.topleft[1]-bottom_reference_point
+            for ii in self.button_keys:
+                button=self.buttons[ii]
+                verti_shift=time_passed*self.scroll_speed
+                button.topleft-=Vector2(0,min(verti_shift,max_shift))
+
+        if firstbutton.topleft[1] >= top_reference_point:
+            self.up_scroll.active=False
+        else:
+            self.up_scroll.active=True
+
+        if lastbutton.topleft[1] <= bottom_reference_point:
+            self.down_scroll.active=False
+        else:
+            self.down_scroll.active=True
