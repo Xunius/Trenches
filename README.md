@@ -24,6 +24,7 @@ from one or multiple directions. If certain number of enemies pass across
 your defence lines, the mission is failed.
 
 Defence units the player can deploy include:
+
     - Rifle men,
     - Machinegun men,
     - Grenadiers,
@@ -36,6 +37,7 @@ Defence units the player can deploy include:
 Enemy team may have all above units except Medics and Ammoboxes.
 
 Some tips/features:
+
     - Firing accuracy will drop when wounded, so will moving speed.
     - Certain chance the enemy's firing will miss, thus mimicking the effect
       of extra cover provided by the trenches.
