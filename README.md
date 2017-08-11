@@ -67,7 +67,7 @@ Author: Guangzhi XU (xugzhi1987@gmail.com, guangzhi.xu@outlook.com)
 # Download:
 
     - Windows (tested in 7 and 10 64bit): https://drive.google.com/open?id=0B8wpnLHH0j1hYVJ3N3F1VlNzWFU
-    - Linux (tested in Manjaro 17.0.2 64bit): https://drive.google.com/open?id=0B8wpnLHH0j1hdHBYSTFlQ09SSlU
+    - Linux (tested in Manjaro 17.0.2 64bit): https://drive.google.com/open?id=0B8wpnLHH0j1hUTl5NGtJWTFmWlk
     - For both of above, download the package, unzip, and run "Trenches"
     - No Mac version at the moment
     - You can of cause obtain the source and run the main python script "Trenches.py", to do that: 
